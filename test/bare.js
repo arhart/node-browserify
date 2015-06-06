@@ -6,10 +6,10 @@ var vm = require('vm');
 
 test('bare', function (t) {
     t.plan(4);
-    
+
     var cwd = process.cwd();
     process.chdir(__dirname);
-    
+
     var ps = spawn(process.execPath, [
         path.resolve(__dirname, '../bin/cmd.js'),
         '-', '--bare'
@@ -32,7 +32,38 @@ test('bare', function (t) {
         });
     }));
     ps.stdin.end('console.log(Buffer("ABC"))');
-    
+
+    ps.on('exit', function (code) {
+        t.equal(code, 0);
+    });
+});
+
+test('bare inserts __filename,__dirname but not process,global,Buffer', function (t) {
+    t.plan(2);
+
+    var cwd = process.cwd();
+    process.chdir(__dirname);
+
+    var ps = spawn(process.execPath, [
+        path.resolve(__dirname, '../bin/cmd.js'),
+        path.resolve(__dirname, 'bare/main.js'),
+        '--bare'
+    ]);
+    var expected =
+        '__dirname,true,' + path.resolve(__dirname, 'bare') + '\n' +
+        '__filename,true,' + path.resolve(__dirname, 'bare/main.js') + '\n' +
+        'process,false,undefined' + '\n' +
+        'global,false,undefined' + '\n' +
+        'Buffer,false,undefined' + '\n';
+    ps.stdout.pipe(concat(function (body) {
+        vm.runInNewContext(body, {
+            console: {
+                log: function (msg) { t.equal(msg, expected) }
+            }
+        });
+    }));
+    ps.stdin.end();
+
     ps.on('exit', function (code) {
         t.equal(code, 0);
     });

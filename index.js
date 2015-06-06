@@ -523,7 +523,7 @@ Browserify.prototype._createDeps = function (opts) {
     });
     
     function globalTr (file) {
-        if (opts.detectGlobals === false) return through();
+        if (opts.detectGlobals === false && opts.insertGlobals === false) return through();
         
         if (opts.noParse === true) return through();
         if (no.indexOf(file) >= 0) return through();
@@ -542,15 +542,22 @@ Browserify.prototype._createDeps = function (opts) {
             }
         }
         
-        var vars = xtend({
+        var vars = {
             process: function () { return "require('_process')" },
-        }, opts.insertGlobalVars);
+        };
+        if (opts.insertGlobals !== false && opts.insertGlobalVars) {
+            var undefault = function () { return undefined };
+            for ( var index in insertGlobals.vars) {
+                vars[index] = undefault;
+            }
+        }
+        vars = xtend(vars, opts.insertGlobalVars);
         
-        if (opts.bundleExternal === false) {
+        if (opts.bundleExternal === false && opts.insertGlobals !== false) {
             delete vars.process;
             delete vars.buffer;
         }
-        
+
         return insertGlobals(file, xtend(opts, {
             debug: opts.debug,
             always: opts.insertGlobals,

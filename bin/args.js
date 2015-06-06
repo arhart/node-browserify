@@ -72,9 +72,18 @@ module.exports = function (args, opts) {
         argv.builtins = false;
         argv.commondir = false;
         argv.detectGlobals = false;
+        argv.ig = true;
         if (argv.igv === undefined) {
             argv.igv = '__filename,__dirname';
         }
+    }
+
+    var insertGlobalVars;
+    if (argv.igv) {
+        insertGlobalVars = argv.igv.split(',').reduce(function (vars, x) {
+            vars[x] = insertGlobals.vars[x];
+            return vars;
+        }, {});
     }
 
     var ignoreTransform = argv['ignore-transform'] || argv.it;
@@ -232,14 +241,6 @@ module.exports = function (args, opts) {
     if (argv.standalone === '') {
         error('--standalone requires an export name argument');
         return b;
-    }
-    
-    var insertGlobalVars;
-    if (argv.igv) {
-        insertGlobalVars = argv.igv.split(',').reduce(function (vars, x) {
-            vars[x] = insertGlobals.vars[x];
-            return vars;
-        }, {});
     }
     
     return b;
