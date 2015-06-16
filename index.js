@@ -553,9 +553,8 @@ Browserify.prototype._createDeps = function (opts) {
         }
         vars = xtend(vars, opts.insertGlobalVars);
         
-        if (opts.bundleExternal === false && opts.insertGlobals !== false) {
-            delete vars.process;
-            delete vars.buffer;
+        if (opts.bundleExternal === false) {
+            vars.process = function () { return undefined };
         }
 
         return insertGlobals(file, xtend(opts, {
